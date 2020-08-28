@@ -59,12 +59,11 @@ export default class Factory {
   async create(adapter, attrs = {}, buildOptions = {}) {
     const model = await this.build(adapter, attrs, buildOptions)
     return adapter
-      .save(model, this.Model)
-      .then(
-        savedModel =>
-          (this.options.afterCreate
-            ? this.options.afterCreate(savedModel, attrs, buildOptions)
-            : savedModel),
+      .save(model, this.Model, buildOptions.transaction)
+      .then(savedModel =>
+        (this.options.afterCreate
+          ? this.options.afterCreate(savedModel, attrs, buildOptions)
+          : savedModel),
       )
   }
 
@@ -112,19 +111,18 @@ export default class Factory {
   ) {
     const attrs = await this.attrsMany(num, attrsArray, buildOptionsArray)
     const models = attrs.map(attr => adapter.build(this.Model, attr))
-    return Promise.all(models).then(
-      builtModels =>
-        (this.options.afterBuild && buildCallbacks
-          ? Promise.all(
-            builtModels.map(builtModel =>
-              this.options.afterBuild(
-                builtModel,
-                attrsArray,
-                buildOptionsArray,
-              ),
+    return Promise.all(models).then(builtModels =>
+      (this.options.afterBuild && buildCallbacks
+        ? Promise.all(
+          builtModels.map(builtModel =>
+            this.options.afterBuild(
+              builtModel,
+              attrsArray,
+              buildOptionsArray,
             ),
-          )
-          : builtModels),
+          ),
+        )
+        : builtModels),
     )
   }
 
@@ -140,20 +138,26 @@ export default class Factory {
       attrsArray,
       buildOptionsArray,
     )
-    const savedModels = models.map(model => adapter.save(model, this.Model))
-    return Promise.all(savedModels).then(
-      createdModels =>
-        (this.options.afterCreate
-          ? Promise.all(
-            createdModels.map(createdModel =>
-              this.options.afterCreate(
-                createdModel,
-                attrsArray,
-                buildOptionsArray,
-              ),
+    const transaction =
+      typeof buildOptionsArray === 'object' && buildOptionsArray.transaction
+        ? buildOptionsArray.transaction
+        : null
+
+    const savedModels = models.map(model =>
+      adapter.save(model, this.Model, transaction),
+    )
+    return Promise.all(savedModels).then(createdModels =>
+      (this.options.afterCreate
+        ? Promise.all(
+          createdModels.map(createdModel =>
+            this.options.afterCreate(
+              createdModel,
+              attrsArray,
+              buildOptionsArray,
             ),
-          )
-          : createdModels),
+          ),
+        )
+        : createdModels),
     )
   }
 }

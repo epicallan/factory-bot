@@ -1,6 +1,6 @@
 {
-  "name": "factory-bot",
-  "description": "A factory library for Node.js and JavaScript inspired by factory_girl",
+  "name": "@epicallan/factory-bot",
+  "description": "Fork of factory-bot which is a fork of factory-girl",
   "main": "./main.js",
   "module": "./src/index",
   "types": "index.d.ts",

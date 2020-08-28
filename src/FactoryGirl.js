@@ -119,10 +119,10 @@ export default class FactoryGirl {
       )
   }
 
-  async create(name, attrs, buildOptions = {}) {
+  async create(name, attrs, buildOptions = {}, transaction = null) {
     const adapter = this.getAdapter(name)
     return this.getFactory(name)
-      .create(adapter, attrs, buildOptions)
+      .create(adapter, attrs, buildOptions, transaction)
       .then(createdModel => this.addToCreatedList(adapter, createdModel))
       .then(model =>
         (this.options.afterCreate
